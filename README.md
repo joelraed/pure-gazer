@@ -1,6 +1,6 @@
 # Pure Gazer — Shimmer Reverb
 
-Independent stereo granular shimmer/delay audio effect in C++17, developed from the [MPC Gazer v0.4 prototype](https://github.com/joelraed/mpc-gazer).
+Independent stereo granular shimmer/delay audio effect in C++17.
 
 The original v0.4 DSP has **worked on an ARMv7 MPC One running HAKAI 3.9.0**, with approximately 13–18 CPU percentage points per instance in a Mini D project. The **Pure Gazer identity and binaries are not yet hardware-tested**.
 
