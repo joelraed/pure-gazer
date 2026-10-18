@@ -1,0 +1,23 @@
+{
+  "name": "Pure Gazer",
+  "vendor": "Pure Gazer",
+  "uid": "PGzr",
+  "version": 400,
+  "so": "PureGazer.so",
+  "effect": true,
+  "params": "params.json",
+  "build": {
+    "root": "..",
+    "sources": [
+      "src/GazerDSP.cpp",
+      "src/MPCAdapter.cpp"
+    ],
+    "cflags": [
+      "-Isrc"
+    ],
+    "libs": [
+      "-lm"
+    ]
+  },
+  "presets": "presets.json"
+}

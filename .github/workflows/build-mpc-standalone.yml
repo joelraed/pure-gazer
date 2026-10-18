@@ -1,0 +1,31 @@
+name: Build MPC One standalone (experimental)
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  armv7:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - name: Build using Debian Bullseye ARMv7 container
+        run: bash scripts/build-mpc-arm.sh
+      - name: Verify ABI and GLIBC linkage
+        run: |
+          file dist/PureGazer.so
+          readelf -h dist/PureGazer.so | grep -E 'Class:|Machine:|Flags:'
+          readelf -Ws dist/PureGazer.so | grep VSTPluginMain
+          readelf --version-info dist/PureGazer.so | tee /tmp/versions.txt
+          python3 - <<'PY'
+          import re
+          text=open('/tmp/versions.txt').read()
+          versions=[tuple(map(int,m)) for m in re.findall(r'GLIBC_(\d+)\.(\d+)',text)]
+          if versions and max(versions)>(2,32): raise SystemExit('glibc newer than original MPC firmware baseline')
+          print('GLIBC version check passed:',max(versions) if versions else 'no GLIBC versions')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PureGazer-v0.4-ARMv7-EXPERIMENTAL
+          path: dist/PureGazer.so
+          if-no-files-found: error
