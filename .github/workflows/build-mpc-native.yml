@@ -1,36 +1,57 @@
-name: Build Pure Gazer native MPC skin and wrapper
+name: Build Pure Gazer v0.5.4 native multipage skin
 on:
   push:
     branches: [main, feature/v0.5.4-multipage-skin]
   workflow_dispatch:
 jobs:
-  package:
+  skin:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
           path: pure-gazer
-      - uses: docker/setup-qemu-action@v3
-      - name: Check out Open MPC framework
+      - name: Check out Plaits-compatible Open MPC framework
         uses: actions/checkout@v4
         with:
           repository: poloq-instruments/mpc-vst-plugins
           ref: poloq-dev
           path: mpc-vst-plugins
-      - name: Generate skin, Q-Links, ARM VST2 and registration metadata
+      - name: Compile artwork renderer
         run: |
+          mkdir -p pure-gazer/vst/build
+          gcc -O2 -Impc-vst-plugins/tools/vendor/force-shadow/tools \
+            -o pure-gazer/vst/build/shadow_art mpc-vst-plugins/tools/shadow_art.c -lm
+      - name: Generate skin and Q-Links from layout.conf (DSP unchanged)
+        run: |
+          python3 -m venv /tmp/pure-gazer-skin
+          /tmp/pure-gazer-skin/bin/pip -q install pillow
           cd mpc-vst-plugins
-          bash tools/build_port.sh ../pure-gazer/vst/vst.json armv7
-      - name: Inspect package
+          SHADOW_ART="$GITHUB_WORKSPACE/pure-gazer/vst/build/shadow_art" \
+            /tmp/pure-gazer-skin/bin/python tools/gen_vst.py ../pure-gazer/vst/vst.json
+      - name: Validate generated tab and Q-Link mappings
         run: |
-          find pure-gazer/vst/build -maxdepth 5 -type f | head -60
-          file pure-gazer/vst/build/PureGazer.so
-          readelf -Ws pure-gazer/vst/build/PureGazer.so | grep VSTPluginMain
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          skin=Path("pure-gazer/vst/build/skin/Pure Gazer - VST - Pure Gazer/Plugin Skins")
+          tui=json.loads((skin/"TUI.json").read_text())
+          labels=[t["tabName"] for t in tui["pageData"]["tabs"]]
+          assert labels==["SPACE","SHIMMER","MOTION & MIX"], labels
+          keys={d["key"] for d in tui["pageData"]["componentDefinitions"]["localComponentDefinitions"]}
+          assert all(t["componentName"] in keys for t in tui["pageData"]["tabs"])
+          for name in ("Q-Links.json","Q-Links - 8by1.json"):
+              m=json.loads((skin/name).read_text())["Screen Mode Q-Links"]["map"]
+              assert [(b["Tab"],b["SubTab"]) for b in m]==[(1,1),(2,1),(3,1)]
+              for page,b in enumerate(m):
+                  used={v for v in b["Q-Links"].values() if v>=0}
+                  assert used==set(range(5*page,5*page+5)), (name,page,used)
+          print("Validated three TUI pages, correct components, 15 bindings and both Q-Link maps")
+          PY
       - uses: actions/upload-artifact@v4
         with:
-          name: PureGazer-v0.5.4-generated-skin-and-wrapper
+          name: PureGazer-v0.5.4-generated-TUI-and-QLinks
           path: |
-            pure-gazer/vst/build/PureGazer.so
             pure-gazer/vst/build/skin/
-            pure-gazer/vst/build/pluginlist-entry.xml
+            pure-gazer/vst/layout.conf
+            pure-gazer/vst/vst.json
           if-no-files-found: error
