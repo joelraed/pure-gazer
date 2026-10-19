@@ -1,7 +1,7 @@
 name: Build Pure Gazer native MPC skin and wrapper
 on:
   push:
-    branches: [main]
+    branches: [main, feature/v0.5.4-multipage-skin]
   workflow_dispatch:
 jobs:
   package:
@@ -14,7 +14,8 @@ jobs:
       - name: Check out Open MPC framework
         uses: actions/checkout@v4
         with:
-          repository: sd88me/mpc-vst-plugins
+          repository: poloq-instruments/mpc-vst-plugins
+          ref: poloq-dev
           path: mpc-vst-plugins
       - name: Generate skin, Q-Links, ARM VST2 and registration metadata
         run: |
@@ -27,7 +28,7 @@ jobs:
           readelf -Ws pure-gazer/vst/build/PureGazer.so | grep VSTPluginMain
       - uses: actions/upload-artifact@v4
         with:
-          name: PureGazer-MPC-OS3-skin-and-wrapper-EXPERIMENTAL
+          name: PureGazer-v0.5.4-generated-skin-and-wrapper
           path: |
             pure-gazer/vst/build/PureGazer.so
             pure-gazer/vst/build/skin/
