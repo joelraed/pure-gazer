@@ -2,7 +2,7 @@
   "name": "Pure Gazer",
   "vendor": "Pure Gazer",
   "uid": "PGzr",
-  "version": 400,
+  "version": 504,
   "so": "PureGazer.so",
   "effect": true,
   "params": "params.json",
@@ -19,5 +19,6 @@
       "-lm"
     ]
   },
-  "presets": "presets.json"
+  "presets": "presets.json",
+  "layout": "layout.conf"
 }
