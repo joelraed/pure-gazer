@@ -13,7 +13,8 @@
       "src/MPCAdapter.cpp"
     ],
     "cflags": [
-      "-Isrc"
+      "-Isrc",
+      "-I/mv/wrapper"
     ],
     "libs": [
       "-lm"
